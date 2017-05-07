@@ -1,15 +1,18 @@
 import socket
 import threading
 import json
-from time import time
+from time import time, sleep
+from dbhandler import DBHandler
 
 class ServerEntity(threading.Thread):
-	def __init__(self, host, port):
+	def __init__(self, host, port, dbhost="localhost", dbport=27017):
 		threading.Thread.__init__(self)
 		self.ssap = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.ssap.bind((host, port))
 		self.ssap.listen(1)
 		self.client_handlers = dict()
+		
+		self.dbhandler = DBHandler(mongohost=dbhost, mongoport=dbport)
 		print('listening on ',port)
 		
 	def run(self):
@@ -25,7 +28,7 @@ class ServerEntity(threading.Thread):
 	
 	def connConf(self, ssap):
 		print('confirm connection')
-		message_str = '{"context":"connResp","content":"","sender":"server"}'
+		message_str = '{"context":"connResp","content":"","sender":"server","status":"read"}' + '[--END--]'
 		ssap.send(message_str.encode('utf-8'))
 		
 	def TCPDataInd(self, sender, receiver, message_str):
@@ -34,14 +37,16 @@ class ServerEntity(threading.Thread):
 		self.TCPDataSend(receiver, message_str)
 	
 	def TCPDataConf(self, sender):
-		message_str = '{"context":"TCPDataResp","content":"' + str(time()) + '","sender":"server"}'
+		message_str = '{"context":"TCPDataResp","content":"' + str(time()) + '","sender":"server","status":"read"}' + '[--END--]'
 		self.client_handlers[sender].send(message_str.encode('utf-8'))
 		
 	def TCPDataSend(self, receiver, message_str):
 		try:
-			self.client_handlers[receiver].send(message_str)
+			message_json = json.loads(message_str)
+			message_json["status"] = "read"
+			self.client_handlers[receiver].send(message_str + '[--END--]')
 		except KeyError:
-			print('no receiver named ', receiver)
+			self.dbhandler.save_message(json.loads(message_str))
 			
 	def TCPDataResp(self, receiver):
 		print(receiver,' has received the message')
@@ -51,20 +56,31 @@ class ServerEntity(threading.Thread):
 		self.disconnConf(client)
 		
 	def disconnConf(self, client):
-		message = '{"context":"disconnResp","content":"' + str(time()) + '","sender":"server"}'
+		message = '{"context":"disconnResp","content":"' + str(time()) + '","sender":"server"}' + '[--END--]'
 		
 		self.client_handlers[client].stop()
-		self.client_handlers[client] = None
+		del self.client_handlers[client]
 		
 	def handle_greet(self, new_name, client):
 		print(new_name,' has new inbox')
 		self.client_handlers[new_name] = client
 		
+		msgs = self.dbhandler.load_not_read(new_name)
+		print(new_name,' has ',msgs.count(),' new messages ')
+		for msg in msgs:
+			msg = json.dumps(msg)
+			print(msg)
+			self.TCPDataSend(new_name, msg)
+			
+		self.dbhandler.mark_as_read(new_name)
+		
 	def prepare_message(self, sender, receiver, content):
 		message_json = {
 			"context":"TCPDataInd",
 			"sender":sender,
-			"content":content
+			"receiver":receiver,
+			"content":content,
+			"status":"not read"
 		}
 		
 		message_str = json.dumps(message_json)
@@ -98,8 +114,7 @@ class ClientHandlerThread(threading.Thread):
 		return self.name
 		
 	def send(self, message_str):
-		print(message_str)
-		self.ssap.send(message_str.encode('utf-8'))
+		self.ssap.sendall(message_str.encode('utf-8'))
 		
 	def run(self):
 		while self.connected:
@@ -125,7 +140,7 @@ class ClientHandlerThread(threading.Thread):
 	
 if __name__ == "__main__":
 	try:
-		serv = ServerEntity("localhost", 9000)
+		serv = ServerEntity("0.0.0.0", 9000)
 		serv.start()
 	except KeyboardInterrupt:
 		exit()

@@ -104,6 +104,7 @@ class ClientGUI:
 			
 	def disconnect_callback(self):
 		self.client_entity.disconnReq()
+		self.btn_connect.config(state=NORMAL)
 		self.text_recv.config(state=DISABLED)
 		self.text_host.config(state=NORMAL)
 		self.text_port.config(state=NORMAL)

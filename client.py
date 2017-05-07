@@ -17,6 +17,7 @@ class ClientEntity():
 		
 	def connResp(self):
 		print('con resp')
+		
 		self.gui.append_text('[SERVER > ME]' + '\n' + 'connected to server')
 		self.connected = True
 		
@@ -43,7 +44,7 @@ class ClientEntity():
 		
 	def disconnReq(self):
 		print('disconn req')
-		message_str = '{"context":"disconnInd","content":"' + str(time()) + '","receiver":"'+self.name+'"}'
+		message_str = '{"context":"disconnInd","content":"' + str(time()) + '","receiver":"'+self.name+'","status":"not read"}'
 		self.csap.send(message_str.encode('utf-8'))
 		
 	def disconnResp(self):
@@ -56,15 +57,15 @@ class ClientEntity():
 	def run(self):
 		while True:
 			try:
-				message_byte = self.csap.recv(256)
-				message_str = message_byte.decode('utf-8').replace("\n","")
-
-				message_json = json.loads(message_str)
-				self.trigger_primitives(message_json)
+				message_byte = self.csap.recv(1024)
+				message_str = message_byte.decode('utf-8').split('[--END--]')
+				
+				for message in message_str:
+					message_json = json.loads(message)
+					self.trigger_primitives(message_json)
+				
 			except ValueError:
-				self.gui.append_text('BYE')
-				self.disconnResp()
-				break
+				pass
 			except ConnectionResetError:
 				break
 			except OSError:
