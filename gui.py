@@ -112,7 +112,7 @@ class ClientGUI:
 		self.text_message.config(state=DISABLED)
 		
 	def send_callback(self):
-		receiver = self.text_message.get("1.0", END).replace("\n","")
+		receiver = self.text_message.get("1.0", END)
 		message_str = self.text_receiver.get("1.0", END)
 		
 		self.client_entity.TCPDataSend(receiver, message_str)

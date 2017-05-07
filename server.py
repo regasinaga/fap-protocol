@@ -42,11 +42,11 @@ class ServerEntity(threading.Thread):
 		
 	def TCPDataSend(self, receiver, message_str):
 		try:
-			message_json = json.loads(message_str)
-			message_json["status"] = "read"
-			self.client_handlers[receiver].send(message_str + '[--END--]')
-		except KeyError:
 			self.dbhandler.save_message(json.loads(message_str))
+			self.client_handlers[receiver].send(message_str + '[--END--]')
+			self.dbhandler.mark_as_read(receiver)
+		except KeyError:
+			print(receiver,' is not online yet')
 			
 	def TCPDataResp(self, receiver):
 		print(receiver,' has received the message')

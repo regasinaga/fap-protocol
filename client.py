@@ -24,14 +24,14 @@ class ClientEntity():
 	def TCPDataSend(self, receiver, message_content):
 		print('data send')
 		message_str = '{"context":"TCPDataInd","content":"' + message_content + '","receiver":"'+ receiver + '"}'
-		self.gui.append_text('[ME > '+receiver+']'+ '\n' + message_content)
+		self.gui.append_text('[ME > '+receiver.replace("\n","") +']'+ '\n' + message_content)
 		self.csap.send(message_str.encode('utf-8'))
 		
 	def TCPDataInd(self, message_json):
 		print('data ind')
 		sender = message_json["sender"]
 		content = message_json["content"]
-		appendthis = '[' + sender + ' > ME ]\n' + content
+		appendthis = '[' + sender + ' > ME ]\n' + content + '\n'
 		self.gui.append_text(appendthis)
 		
 	def TCPDataConf(self):
