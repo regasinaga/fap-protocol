@@ -34,6 +34,7 @@ class ServerEntity(threading.Thread):
 	def TCPDataInd(self, sender, receiver, message_str):
 		print(sender,' has sent new message')
 		message_str = self.prepare_message(sender, receiver, message_str)
+		self.dbhandler.save_message(json.loads(message_str))
 		self.TCPDataSend(receiver, message_str)
 	
 	def TCPDataConf(self, sender):
@@ -42,7 +43,6 @@ class ServerEntity(threading.Thread):
 		
 	def TCPDataSend(self, receiver, message_str):
 		try:
-			self.dbhandler.save_message(json.loads(message_str))
 			self.client_handlers[receiver].send(message_str + '[--END--]')
 			self.dbhandler.mark_as_read(receiver)
 		except KeyError:
@@ -69,7 +69,6 @@ class ServerEntity(threading.Thread):
 		print(new_name,' has ',msgs.count(),' new messages ')
 		for msg in msgs:
 			msg = json.dumps(msg)
-			print(msg)
 			self.TCPDataSend(new_name, msg)
 			
 		self.dbhandler.mark_as_read(new_name)
