@@ -1,13 +1,13 @@
 # fap-protocol
 This is the final project from my Protocol Engineering class. This protocol is implemented above TCP layer.
 
-## Getting Started
+### Getting Started
 
 ## Prerequisites
+* python3
+* pip3
+* pymongo
 
-make sure you have Mongodb. if you are using linux
+if you are using linux, first do
 
-...
-sudo apt-get update
-sudo apt-get install mongo-server 
-...
+
