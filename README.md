@@ -47,7 +47,7 @@ chmod +x server.sh
 
 ### Windows
 
-Just run theses in order
+Just run these file in order by clicking or via terminal
 ```
 mongox.bat
 server.bat
