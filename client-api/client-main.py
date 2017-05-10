@@ -1,21 +1,35 @@
 from clientapi import ClientEntity
+from threading import Thread
 
 # this is a function callback. this function is called everytime
 # TCPDataInd is called.
-
 def demo_func(message_json):
 	print(message_json["content"])
-	
-# for thread name
+
+# init client entity object
 client_name = "YOUR_NAME"
+host = "localhost"
+port = 9000
 client = ClientEntity(client_name, demo_func)
 
-# start another thread
-client.start()
+# connecting
+client.connReq(host, port)
+client.connResp()
+client.greet()
 
-while True:
-	receiver = input("receiver\t:")
-	content = input("content\t:")
+# run receiver threading
+Thread(target=client.run).start()
+
+# user can only send 5 message
+for m in range(0, 5):
+	receiver = input("receiver:\t")
+	content = input("message:\n")
 	client.TCPDataSend(receiver, content)
+	
+# disconnecting
+client.disconnReq()
+client.disconnResp()
+
+
 	
 	
