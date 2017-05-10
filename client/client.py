@@ -18,15 +18,22 @@ class ClientEntity():
 	def connResp(self):
 		print('con resp')
 		
-		self.gui.append_text('[SERVER > ME]' + '\n' + 'connected to server')
+		self.gui.append_text('[SERVER > ME]' + '\n' + 'connected to server\n')
 		self.connected = True
 		
 	def TCPDataSend(self, receiver, message_content):
-		print('data send')
-		message_str = '{"context":"TCPDataInd","content":"' + message_content + '","receiver":"'+ receiver + '"}'
-		self.gui.append_text('[ME > '+receiver.replace("\n","") +']'+ '\n' + message_content)
-		self.csap.send(message_str.encode('utf-8'))
-		
+		try:
+			print('data send')
+			message_str = '{"context":"TCPDataInd","content":"' + message_content + '","receiver":"'+ receiver + '"}'
+			self.gui.append_text('[ME > '+receiver.replace("\n","") +']'+ '\n' + message_content)
+			self.csap.send(message_str.encode('utf-8'))
+			
+		except ConnectionResetError:
+			self.gui.append_text('server has gone\n')
+		except ConnectionRefusedError:
+			self.gui.append_text('cannot keep connection alive\n')
+			self.disconnResp()
+			
 	def TCPDataInd(self, message_json):
 		print('data ind')
 		sender = message_json["sender"]

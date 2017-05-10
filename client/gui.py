@@ -91,7 +91,7 @@ class ClientGUI:
 			self.text_port.config(state=DISABLED)
 			self.text_user.config(state=DISABLED)
 			self.text_message.config(state=NORMAL)
-			self.text_recv.config(state=NORMAL)
+			self.text_recv.config(state=DISABLED)
 			self.text_receiver.config(state=NORMAL)
 			
 			self.btn_connect.config(state=DISABLED)
@@ -101,6 +101,8 @@ class ClientGUI:
 			self.append_text('connection refused')
 		except ConnectionRefusedError:
 			self.append_text('connection refused')
+		except OSError:
+			self.append_text('unreachable host. Please review your connection')
 			
 	def disconnect_callback(self):
 		self.client_entity.disconnReq()
